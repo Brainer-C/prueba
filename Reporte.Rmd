@@ -419,7 +419,7 @@ grafico8 <- ggplot(Base, aes(x=sexo, y=n_party)) +
 ```{r echo=FALSE, fig.height=6, fig.width=10}
 grafico8
 ```
-
+Braincer es bearmansexual
 
 # **Referencias**
 
