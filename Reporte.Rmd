@@ -1,0 +1,430 @@
+---
+title: "Reporte 1"
+subtitle: "La variabilidad de la confianza en los partidos políticos"
+author: "Jafet Sánchez"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+---
+
+```{r include=FALSE}
+#install.packages("rmdformats")
+library("haven")
+library("dplyr")
+library("modeest")
+library("car")
+library("ggplot2")
+library("Hmisc")
+```
+
+```{r include=FALSE}
+setwd("C:/Users/jafet/OneDrive - Universidad de Costa Rica/Semestres/Cuarto Año/Setimo semestre/Cuanti III")
+Base <- read_dta("CIEP-TSE 2022.dta")
+```
+
+# **Supuestos**
+
+De acuerdo con la teoría, la confianza política puede entenderse como el apoyo de los ciudadanos a las instituciones políticas como el gobierno, el parlamento y los partidos (Van der Meer citado en Casetti et al, 2018). Por su parte, en latinoamérica, durante los últimos años la confianza en los partidos políticos se ha visto disminuida a niveles sumamente bajos. Distintos estudios explican que esta desconfianza es un reflejo del descontento de la ciudadanía debido a la percepción que se tiene de las distintas instituciones públicas y la corrupción (Corral, 2008).
+
+Unido a esto, otros estudios sostienen que el desarrollo macroeconómico tiene un efecto positivo en la confianza política (Casetti et al, 2018). A su vez, se señala que este descontento no se proyecta del todo en los políticos (individualmente) sino en los partidos políticos, de manera que, en las elecciones se experimenta un "voto del descontento" que se ve traducido en un "voto en contra" de los partidos (PNUD, 2022).
+
+Lo anterior lleva a considerar que, la percepción de una mala situación económica puede llevar a los ciudadanos a culpar a los partidos políticos por su incapacidad para gestionar la economía de manera efectiva, lo que resulta en una menor confianza en estos partidos. Además, el descontento generalizado con el sistema político y los partidos llevan a un resentimiento social. Por tanto, mi supuesto es: **Cuando las personas perciben que la situación económica nacional es mala, tienden a tener menos confianza en los partidos políticos**.
+
+# **Ecuación Matemática**
+
+## Ecuación del Modelo
+
+$$n\_party_i = \beta_0 + \beta_1 \cdot sit\_eco_i + \beta_2 \cdot sol\_prob_i + \beta_3 \cdot int\_polit_i + \beta_4 \cdot op\_polit_i + \\
+\beta_5 \cdot n\_dip_i + \beta_6 \cdot n\_polit_i + \beta_7 \cdot edad_i + \beta_8 \cdot sexo_i + \beta_9 \cdot desconf_i + u_i $$
+
+## Variables:
+
+-   $n\_party_i$: Cuánta confianza le inspiran los partidos políticos (escala del 1-10).
+
+```{r}
+attr(Base$t_b_16, "labels")
+mlv(Base$t_b_16, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 5
+Base$n_party<-car::recode(Base$t_b_16, "99=5") #Cambia los NAs al valor frecuente
+summary(Base$n_party)
+```
+
+-   $\beta_0$: Intercepto o constante, representa el nivel de confianza en los partidos cuando todas las variables independientes son cero.
+-   $sit\_eco_i$: Percepción de la situación económica a nivel nacional de Muy mala (1) a Muy buena (5).
+
+```{r}
+attr(Base$k2, "labels")
+mlv(Base$k2, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 2
+Base$sit_eco<-car::recode(Base$k2, "0=2") #Cambia los NAs al valor frecuente
+summary(Base$sit_eco)
+```
+
+-   $sol\_prob_i$: Está de acuerdo con la frase "Los políticos no les interesa solucionar los problemas del país" (1 = totalmente en desacuerdo, 5 = totalmente de acuerdo).
+
+```{r}
+attr(Base$rs_10, "labels")
+mlv(Base$rs_10, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 5
+Base$sol_prob<-car::recode(Base$rs_10, "0=5") #Cambia los NAs al valor frecuente
+summary(Base$sol_prob)
+```
+
+-   $int\_polit_i$: Cuánto interés tiene en la política (1 = nada, 5 = mucho).
+
+```{r}
+attr(Base$c8, "labels")
+mlv(Base$c8, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 3
+Base$int_polit<-car::recode(Base$c8, "0=3") #Cambia los NAs al valor frecuente
+summary(Base$int_polit)
+```
+
+-   $op\_polit_i$: ¿Qué opinión tiene usted de la política en general: muy buena, buena, mala o muy mala? (1 = muy mala, 5 = muy buena).
+
+```{r}
+attr(Base$c1, "labels")
+mlv(Base$c1, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 1
+Base$op_polit<-car::recode(Base$c1, "0=4") #Cambia los NAs al valor frecuente
+summary(Base$op_polit)
+```
+
+-   $n\_dip_i$: Cuánta confianza le inspiran los diputados (0= Ninguna confianza, 10 =total confianza).
+
+```{r}
+attr(Base$t_b_6, "labels")
+mlv(Base$t_b_6, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 5
+Base$n_dip<-car::recode(Base$t_b_6, "99=5") #Cambia los NAs al valor frecuente
+summary(Base$n_dip)
+```
+
+-   $n\_polit_i$: Está de acuerdo con la frase "No confío en ningún político" (1 = totalmente en desacuerdo, 5 = totalmente de acuerdo).
+
+```{r}
+attr(Base$rs_1, "labels")
+mlv(Base$rs_1, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 5
+Base$n_polit<-car::recode(Base$rs_1, "0=5") #Cambia los NAs al valor frecuente
+summary(Base$n_polit)
+```
+
+-   $edad_i$: Edad de la persona (en años cumplidos).
+
+```{r}
+summary(Base$l2)
+Base$edad<-car::recode(Base$l2, "999=47")
+summary(Base$edad)
+```
+
+-   $sexo_i$: Sexo (2 = mujer, 1 = hombre).
+
+```{r}
+attr(Base$l1, "labels")
+Base$sexo<-Base$l1 #unicamente pasar la variable
+summary(Base$sexo)
+```
+
+-   $desconf_i$: ¿La política le provoca desconfianza? (1=sí, 2=no).
+
+```{r}
+attr(Base$c27, "labels")
+mlv(Base$c27, method = "mfv", na.rm = "TRUE" ) #valor más frecuente es 6
+Base$desconf<-car::recode(Base$c27, "0=1") #Cambia los NAs al valor frecuente
+summary(Base$desconf)
+```
+
+-   $u_i$: Error (residuo).
+
+# **Tabla de resultados**
+
+```{r}
+M1 <- lm(n_party ~ sit_eco+ sol_prob + int_polit+ op_polit +n_dip +n_polit +edad +sexo +desconf , data = Base) 
+summary(M1)
+```
+
+# **Interpretaciones**
+
+-   **`sit_eco`** :\
+    Por cada punto que mejora la percepción de la situación económica (en la escala de 1 a 5), la confianza en los partidos políticos aumenta en promedio 0.1007 unidades. Por su parte el valor p (0.05691) es suficientemente alto para no rechazar la hipotesis nula, o sea, no es estadísticamente significativa.
+
+-   **`sol_prob`**:\
+    Estar más de acuerdo con la frase "Los políticos no les interesa solucionar los problemas del país" reduce significativamente la confianza en los partidos políticos disminuye en promedio 0.1292 unidades. Esto refleja un impacto negativo significativo (p = 0.00769) en la confianza de los partidos debido al descontento con los políticos (como individuo).
+
+-   **`int_polit`**:\
+    Por cada punto que aumenta el interés en la política, la confianza en los partidos políticos aumenta en promedio 0.5920 unidades. Este es estadísticamente significativa (p \< 2e-16)., por lo que, hay una relación alta entre el interés en la política y la confianza en los partidos políticos.
+
+-   **`op_polit`**:\
+    Por cada punto que mejora la opinión sobre la política en general (pasar de muy mala a mala), la confianza en los partidos políticos aumenta en promedio 0.6537 unidades. Este coeficiente es estadísticamente significativo (p \< 2e-16).
+
+-   **`n_dip`**:\
+    Por cada punto que aumenta la confianza en los diputados, la confianza en los partidos políticos aumenta en promedio 0.2881 unidades. Esto evidencia una conexión importante entre estas instituciones, siendo estadísticamente significativa (p \< 2e-16).
+
+-   **`n_polit`** :\
+    Por cada punto que aumenta el acuerdo con la frase "No confío en ningún político", la confianza en los partidos políticos aumenta en promedio 0.1704 unidades (manteniendo las demás variables constantes). Asimismo, es estadísticamente significativa (p \< 0.001). Es decir, una mayor desconfianza en los políticos individuales parece asociarse con un aumento leve en la confianza en los partidos políticos. Esto resulta paradójico, pero podría interpretarse como una desconfianza a los individuos (los políticos), pero manteniendo cierta confianza en los partidos como conjunto, recalcando que el aumento es leve.
+
+-   **`edad`**:\
+    La edad tiene un efecto negativo (-0.009444) y significativo (p = 0.00561), es decir, las personas más jóvenes tienden a tener mayor confianza en los partidos políticos en comparación con las personas mayores.
+
+-   **`sexo`**:\
+    En promedio, las mujeres tienen en promedio 0.2700 unidades más de confianza en los partidos políticos que los hombres. Este efecto es estadísticamente significativo (p = 0.01983).
+
+-   **`desconf`** :\
+    En promedio, las personas que responden "no" a que la política les provoca desconfianza tienen 0.6355 unidades más de confianza en los partidos políticos en comparación con quienes responden "sí", manteniendo constantes las demás variables del modelo y siendo estadísticamente significativa (p \< 0.001) . Esto implica que, la ausencia de desconfianza genera confianza en los partidos políticos, aunque es destacable que la confianza en los partidos aún sigue siendo moderadamente baja.
+
+De acuerdo con el $R^2$ el modelo (M1) explica aproximadamente el 42.23% de la variabilidad en la confianza en los partidos políticos. De este se resalta cómo las percepciones subjetivas, especialmente el interés en la política `(int_polit)`, las opiniones generales sobre la política (`op_polit)`, así como la desconfianza `(desconf)` tienen un peso fuerte en la confianza que le inspiran los partidos políticos a la ciudadanía; mientras que el factor económico no lo es tanto como así lo indica la teoría.
+
+# **Gráfico de efectos de x en y**
+
+## Relación entre la confianza en los partidos y la situación económica
+
+En este primer gráfico se muestra la relación positiva existente entre la percepción de la situación económica a nivel nacional con la confianza en los partidos políticos. Esto significa que, mientras mejor es la percepción de la sitación económica, habrá más confianza en los partidos políticos. Sin embargo, es clave resaltar que la escala de confianza es del 1 al 10, lo cual indica que aún en su punto más alto, la confianza en los partidos políticos es baja.
+
+```{r}
+grafico1 <- ggplot(Base, aes(x=sit_eco, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') + 
+  theme_classic() + 
+  labs(
+    title = "Gráfico 1. Relación entre la percepción de la situación económica y la confianza en los partidos", 
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "Percepción de la situación económica", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = c(1, 2, 3, 4, 5), 
+    labels = c("Muy mala", "Mala", "Neutral", "Buena", "Muy buena") 
+  ) +
+  theme(
+    legend.position = "none",
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico1
+```
+
+## Relación entre la confianza en los partidos políticos y la frase "Los políticos no les interesa solucionar los problemas del país"
+
+En este segundo gráfico se evidencia la relación negativa que tiene la confianza en los partidos políticos con el grado de acuerdo que tienen las personas con la frase "Los políticos no les interesa solucionar los problemas del país". Con esto se evidencia que, mientras menos de acuerdo están con la frase, tienen más confianza en los partidos. Conforme aumenta el nivel de acuerdo con la frase, se disminuye la confianza.
+
+```{r}
+grafico2 <- ggplot(Base, aes(x=sol_prob, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  theme_classic() + 
+  labs(
+    title = "Gráfico 2. Relación entre el interés de los políticos para solucionar los problemas y la confianza en partidos",
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "'Los políticos no les interesa solucionar los problemas del país'", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = c(1, 2, 3, 4, 5),
+    labels = c("Muy en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Muy de acuerdo")
+  ) +
+  theme(
+    legend.position = "none", 
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5), 
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico2
+```
+
+## Relación entre si la política le provoca desconfianza y la confianza en los partidos políticos
+
+En este tercer gráfico, se presenta la relación entre si la política le provoca desconfianza y la confianza en los partidos políticos. Los resultados muestran que, en promedio, las personas que sienten desconfianza hacia la política tienen un nivel menor de confianza en los partidos políticos, mientras que aquellos que no sienten desconfianza reportan una confianza promedio más alta.
+
+```{r}
+grafico3 <- ggplot(Base, aes(x=factor(desconf, levels = c(1, 2), labels = c("Sí", "No")), y=n_party, fill=factor(desconf, levels = c(1, 2), labels = c("Sí", "No")))) +
+  geom_bar(stat="summary", fun="mean", position=position_dodge(width=0.7), width=0.5, alpha=0.9) +  
+  geom_errorbar(stat="summary", fun.data=mean_cl_normal, position=position_dodge(width=0.7), width=0.5, color="black") +  # Intervalos del mismo ancho que las barras
+  scale_fill_manual(values = c("Sí" = "#2C3E50", "No" = "#5395DB")) + 
+  scale_y_continuous(limits = c(0, 10), breaks = seq(0, 10, by = 1)) +  
+  theme_classic() +
+  labs(
+    title = "Gráfico 3. Desconfianza en la política y confianza en los partidos",
+    subtitle= "Promedio de confianza en los partidos políticos",
+    x = "¿La política le provoca desconfianza?",
+    y = "",
+    fill = ""
+  ) +
+  theme(
+    legend.position = "none", 
+    plot.caption = element_text(size = 10, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)
+  )
+```
+
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico3
+```
+
+## Relación entre la opinión sobre la política y la confianza entre los partidos políticos
+
+En este gráfico se evidencia una relación positiva entre la opinión sobre la política y la confianza en los partidos políticos. Esto significa que, a medida que las personas tienen una mejor opinión sobre la política (pasando de "Muy mala" a "Muy buena"), su confianza en los partidos políticos tiende a aumentar. Es implica que, si se percibe bien la política en general, entonces las confianza en los partidos será mayor.
+
+```{r}
+grafico4 <- ggplot(Base, aes(x=op_polit, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') + 
+  theme_classic() + 
+  labs(
+    title = "Gráfico 4. Relación entre la opinión sobre la política y la confianza en los partidos", 
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "Opinión sobre la política", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = c(1, 2, 3, 4, 5), 
+    labels = c("Muy mala", "Mala", "Neutral", "Buena", "Muy buena") 
+  ) +
+  theme(
+    legend.position = "none",
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico4
+```
+
+## Relación entre el interés en la política y la confianza entre los partidos políticos
+
+En este gráfico se evidencia una relación positiva entre el interés en la política y la confianza en los partidos políticos. Esto significa que, a medida que las personas muestran un mayor interés en la política (pasando de "Nada" a "Mucho"), su confianza en los partidos políticos tiende a aumentar. Es decir, mientras más se interesan más confiarían en los partidos.
+
+```{r}
+grafico5 <- ggplot(Base, aes(x=int_polit, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') + 
+  theme_classic() + 
+  labs(
+    title = "Gráfico 5. Relación entre el interés en la política y la confianza en los partidos", 
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "Interés en la política", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = c(1, 2, 3, 4, 5), 
+    labels = c("Nada", "Poco", "Regular", "Algo", "Mucho") 
+  ) +
+  theme(
+    legend.position = "none",
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico5
+```
+
+## Relación entre el acuerdo con la frase "No confía en ningún político" y la confianza entre los partidos políticos
+
+En este gráfico se evidencia la relación positiva que tiene la confianza en los partidos políticos con el grado de acuerdo que tienen las personas con la frase "No confío en ningún político". Con esto se muestra que, mientras más de acuerdo están con la frase, tienen ligeramente más confianza en los partidos. Conforme aumenta el nivel de acuerdo con la frase, se incrementa la confianza en los partidos políticos, aunque el efecto es leve.
+
+```{r}
+grafico6 <- ggplot(Base, aes(x=n_polit, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') + 
+  theme_classic() + 
+  labs(
+    title = "Gráfico 6. Relación de grado de acuerdo con la frase 'No confía en ningún político' y la confianza en partidos", 
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "Grado de acuerdo", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = c(1, 2, 3, 4, 5), 
+    labels = c("Totalmente en desacuerdo", "En desacuerdo", "Neutral", "De acuerdo", "Totalmente de acuerdo") 
+  ) +
+  theme(
+    legend.position = "none",
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+
+```{r echo=FALSE, fig.height=7, fig.width=13}
+grafico6
+```
+
+## Relación entre la confianza que le inspiran los diputados y la confianza en los partidos políticos
+
+En este gráfico se evidencia la relación positiva que tiene la confianza en los partidos políticos con la confianza que inspiran los diputados. Con esto se muestra que, mientras mayor es la confianza en los diputados (pasando de "Ninguna" a "Total"), mayor es la confianza en los partidos políticos. Conforme aumenta la percepción positiva hacia los diputados, se incrementa también la confianza en las instituciones partidarias.
+
+```{r}
+grafico7 <- ggplot(Base, aes(x=n_dip, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') + 
+  theme_classic() + 
+  labs(
+    title = "Gráfico 7. Relación entre la confianza que le inspiran los diputados y la confianza en los partidos", 
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "Confianza que le inspiran los diputados", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 10, by = 1), 
+    labels = seq(0, 10, by = 1) 
+  ) +
+    scale_x_continuous(
+    breaks = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), 
+    labels = c("Ninguna", 1, 2, 3, 4, 5, 6, 7, 8, 9, "Total") 
+  ) +
+  theme(
+    legend.position = "none",
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico7
+```
+
+## Relación entre el sexo y la confianza en los partidos políticos
+
+```{r}
+grafico8 <- ggplot(Base, aes(x=sexo, y=n_party)) + 
+  geom_smooth(method=lm, color='#2C3E50') + 
+  theme_classic() + 
+  labs(
+    title = "Gráfico 8. Relación  entre el sexo y la confianza en los partidos políticos", 
+    subtitle = "Confianza en los partidos políticos (escala de 1 a 10)", 
+    x = "", 
+    y = ""
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 10, by = 1), 
+    labels = seq(0, 10, by = 1) 
+  ) +
+    scale_x_continuous(
+    breaks = c(1, 2), 
+    labels = c("Mujer", "Hombre") 
+  ) +
+  theme(
+    legend.position = "none",
+    plot.caption = element_text(size = 15, hjust = 0),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    axis.text.y = element_text(angle = 0, hjust = 0.5)  
+  )
+```
+```{r echo=FALSE, fig.height=6, fig.width=10}
+grafico8
+```
+
+
+# **Referencias**
+
+Casetti, M. M., Gutiérrez, M. B., & Sánchez, J. S. (2018). *Determinantes de la confianza política. Un estudio transversal*. <https://www.redalyc.org/journal/3575/357559213001/html/>
+
+Corral, M. (2008). (Des)confianza en los partidos políticos en América Latina. *Revista De Ciencia PolíTica*, *28*(2). <https://doi.org/10.4067/s0718-090x2008000200009>
+
+PNUD (2022) *¿El fin de los partidos políticos? El voto del descontento y el debilitamiento de los partidos políticos*. <https://www.undp.org/es/latin-america/noticias/fin-de-los-partidos-politicos-el-voto-del-descontento-y-el-debilitamiento-de-los-partidos-politicos-en-alc>
